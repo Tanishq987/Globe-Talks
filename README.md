@@ -1,3 +1,7 @@
+
+
+https://user-images.githubusercontent.com/55459142/131486995-36ba03b1-67d4-43f0-93df-7e0900615229.mp4
+
 ![Screenshot_2021-08-31-14-03-57-746_com example our_news_app](https://user-images.githubusercontent.com/55459142/131475116-a1c229ce-332e-45e1-b70d-9c731dddb4e9.jpg)
 ![Screenshot_2021-08-31-14-04-17-766_com example our_news_app](https://user-images.githubusercontent.com/55459142/131475137-686a6f26-ae79-4604-a79d-a4f57fe04470.jpg)![Screenshot_2021-08-31-14-04-35-475_com example our_news_app](https://user-images.githubusercontent.com/55459142/131475219-f9adb8fd-c355-43cf-8545-3b074953eeac.jpg)
 ![Screenshot_2021-08-31-14-04-52-471_com example our_news_app](https://user-images.githubusercontent.com/55459142/131475231-6815f4d1-657d-4e5a-bc98-aa7f5daf0443.jpg)
