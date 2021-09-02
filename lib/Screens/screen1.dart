@@ -1,13 +1,16 @@
-import 'package:email_auth/email_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
-import 'package:our_news_app/dataservice.dart';
+import 'package:our_news_app/Login/login.dart';
+import 'package:our_news_app/Screens/filter.dart';
+import 'package:our_news_app/Screens/screen2.dart';
+import 'package:our_news_app/Screens/screen3.dart';
+import 'package:our_news_app/Screens/search.dart';
+import 'package:our_news_app/dataservice/dataservice.dart';
 import 'package:our_news_app/models/article_model.dart';
-import 'package:our_news_app/screen2.dart';
-import 'package:our_news_app/screen3.dart';
-import 'package:our_news_app/search.dart';
 import 'package:our_news_app/service/api.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -19,14 +22,25 @@ class Homepage extends StatefulWidget {
 
 class _HomepageState extends State<Homepage> {
 
-  
+  @override
+  void initState() { 
+    super.initState();
+    dsvar.userauth(dsvar.userauth.toString());
+    SystemChrome.setPreferredOrientations(
+      [DeviceOrientation.portraitDown,DeviceOrientation.portraitUp,]
+    );
+  }
+
+
+  final Dataservice dsvar=Get.find<Dataservice>();
 
   ApiService client = ApiService();
-  String s1 = "http://newsapi.org/v2/everything?q=";
-  String s2 = "&apiKey=758b45cf50bf475cbd2f2ba76698bf96";
 
-    w(w1,pw){return pw*(w1/392);}
-	h(h1,ph){return ph*(h1/850);}
+  String s1 = "http://newsapi.org/v2/everything?q=";
+  String s2 = "&apiKey=1e5f1856fd144cc5898130425ce37a22";
+  int selectedicon = 0;
+    w(w1,pw){return pw*(w1/394);}
+	h(h1,ph){return ph*(h1/851);}
     capitalizeFirstOfEach(s){return s.replaceAll(RegExp(' +'), ' ').split(" ").map((str) => str.toString().capitalize).join(" ");}
 
   funsnack(title,desc,Color c1,IconData i1,isize,to,bo,le,ri){
@@ -47,7 +61,6 @@ class _HomepageState extends State<Homepage> {
 
 
     fundatetime(publish,type){
-    var i1 = publish.toString().indexOf('T');
     if(type==0){
       var da = publish.toString().substring(8,10);
       var mo = publish.toString().substring(5,7);
@@ -86,18 +99,30 @@ class _HomepageState extends State<Homepage> {
   Widget build(BuildContext context) {
     var pw=Get.size.width;
     var ph=Get.size.height;
+
     print('$pw pw');
     print('$ph ph');
     return DefaultTabController(
       length: 6,
       child: Scaffold(
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            Get.to(() => Serach());
+        bottomNavigationBar: BottomNavigationBar(
+          showSelectedLabels: false,showUnselectedLabels: false,currentIndex: selectedicon,selectedItemColor: Colors.black,
+          unselectedItemColor: Colors.black.withOpacity(0.5),
+          onTap: (value){
+            setState(() 
+            {
+            selectedicon=value;
+             if (selectedicon==0){Navigator.push(context, MaterialPageRoute(builder: (context)=>Screen3()));}
+            else if (selectedicon==1){Navigator.push(context, MaterialPageRoute(builder: (context)=>Filter()));}
+            else if (selectedicon==2){Navigator.push(context, MaterialPageRoute(builder: (context)=>Serach()));}
+            });
           },
-          backgroundColor: Colors.deepOrange,
-          child: Icon(Icons.search,size: w(30,pw),),
-        ),
+          items: [  
+            BottomNavigationBarItem(icon: Icon(Icons.bookmark,size: w(30,pw),color: Colors.orange,),label:"BookMark" ),
+            BottomNavigationBarItem(icon: Icon(Icons.filter_list_outlined,color: Colors.purple,size:w(30,pw)),label:"Filter" ),
+            BottomNavigationBarItem(icon: Icon(Icons.search,size: w(30,pw),color: Colors.deepOrange,),label:"Search" ), 
+          ]
+          ),
         body: NestedScrollView(
           headerSliverBuilder: (context, bool) {
             return [
@@ -106,6 +131,7 @@ class _HomepageState extends State<Homepage> {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18)),
                 titleSpacing: 0,
+                leadingWidth: 0,
                 toolbarHeight: h(510,ph),
                 elevation: 10,
                 shadowColor: Colors.black.withOpacity(0.7),
@@ -135,30 +161,27 @@ class _HomepageState extends State<Homepage> {
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           SizedBox(
-                            width: w(100,pw),
+                            width: w(50,pw),
                           ),
                           Text(
-                            "News App",
+                            "Globe Talks",
                             style: TextStyle(
                                 fontSize: w(30,pw),
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold),
                           ),
                           SizedBox(
-                            width: w(40,pw),
+                            width: w(30,pw),
                           ),
                           IconButton(
-                              onPressed: () {
-                                Get.to(() => Screen3());
-                              },
-                              icon: Icon(
-                                Icons.bookmark,
-                                size: w(28,pw),
-                                color: Colors.white,
-                              )),
-                          IconButton(
-                              onPressed: () {
-                                // Get.to(()=>Makemeal());
+                              onPressed: () async{
+                                dsvar.userauth('');
+                                await FirebaseAuth.instance.signOut();
+                                funsnack('Thank you ! ',"Thank you for being a user of Globe Talks  ",Colors.purple,Icons.favorite,30.0,0.0,20.0,10.0,10.0);
+                                Future.delayed(Duration(milliseconds: 1500),(){
+                                  Get.to(()=>Mood());
+                                });
+                                
                               },
                               icon: Icon(
                                 Icons.power_settings_new,
@@ -193,7 +216,7 @@ class _HomepageState extends State<Homepage> {
                     Container(
                       height: h(230,ph),
                       child: FutureBuilder(
-                        future: client.getNews("http://newsapi.org/v2/top-headlines?q=a&apiKey=758b45cf50bf475cbd2f2ba76698bf96"),
+                        future: client.getNews("http://newsapi.org/v2/top-headlines?q=a&apiKey=1e5f1856fd144cc5898130425ce37a22"),
                         builder: (BuildContext context, AsyncSnapshot<List<NewsResponse>> snapshot) {
                           //let's check if we got a response or not
                           if (snapshot.hasData) {
@@ -243,7 +266,7 @@ class _HomepageState extends State<Homepage> {
                                             alignment: Alignment.topRight,
                                             child: GestureDetector(
                                               onTap: ()async{
-                                                var res = await Dataservice().funadd(news[index].title,fundatetime(news[index].publishedAt,0),fundatetime(news[index].publishedAt,1),news[index].description,news[index].urlToImage,'Breaking',news[index].source.name,news[index].publishedAt,author:news[index].author);
+                                                var res = await Dataservice().funadd(dsvar.userauth.toString(),news[index].title,fundatetime(news[index].publishedAt,0),fundatetime(news[index].publishedAt,1),news[index].description,news[index].urlToImage,'Breaking',news[index].source.name,news[index].publishedAt,author:news[index].author);
                                                 if(res[0]!=null){
                                                   funsnack('News Added','News added to your bookmarks',Colors.purpleAccent,Icons.info_outline,30.0,0.0,20.0,10.0,10.0);
                                                 }else{
@@ -411,12 +434,12 @@ class _HomepageState extends State<Homepage> {
           body: TabBarView(
             physics: ClampingScrollPhysics(),
             children: [
-              _future("Business","http://newsapi.org/v2/everything?q=Business&apiKey=758b45cf50bf475cbd2f2ba76698bf96".toString()),
-              _future("Health","http://newsapi.org/v2/everything?q=Health&apiKey=758b45cf50bf475cbd2f2ba76698bf96".toString()),
-              _future("Politics","http://newsapi.org/v2/everything?q=Politics&apiKey=758b45cf50bf475cbd2f2ba76698bf96".toString()),
-              _future("Food","http://newsapi.org/v2/everything?q=Food&apiKey=758b45cf50bf475cbd2f2ba76698bf96".toString()),
-              _future("Fashion","http://newsapi.org/v2/everything?q=Fashion&apiKey=758b45cf50bf475cbd2f2ba76698bf96".toString()),
-              _future("Sport","http://newsapi.org/v2/everything?q=Sport&apiKey=758b45cf50bf475cbd2f2ba76698bf96".toString()),
+              _future("Business",(s1+"Business" + s2).toString()),
+              _future("Health",  (s1 + "Health" + s2).toString()),
+              _future("Politics",(s1 + "Politics"+ s2).toString()),
+              _future("Food",    (s1 + "Food"+ s2).toString()),
+              _future("Fashion", (s1 + "Fashion"+ s2).toString()),
+              _future("Sport",   (s1 + "Sport"+ s2).toString()),
             ],
           ),
         ),
@@ -504,7 +527,7 @@ class _HomepageState extends State<Homepage> {
                                             flex: 2,
                                             child: GestureDetector(
                                               onTap: ()async{
-                                                var res = await Dataservice().funadd(news[index].title,fundatetime(news[index].publishedAt,0),fundatetime(news[index].publishedAt,1),news[index].description,news[index].urlToImage,'Breaking',news[index].source.name,news[index].publishedAt,author:news[index].author);
+                                                var res = await Dataservice().funadd(dsvar.userauth.toString(),news[index].title,fundatetime(news[index].publishedAt,0),fundatetime(news[index].publishedAt,1),news[index].description,news[index].urlToImage,'Breaking',news[index].source.name,news[index].publishedAt,author:news[index].author);
                                                 if(res[0]!=null){
                                                   funsnack('News Added','News added to your bookmarks',Colors.purpleAccent,Icons.info_outline,30.0,0.0,20.0,10.0,10.0);
                                                 }else{

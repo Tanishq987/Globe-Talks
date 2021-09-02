@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:get/get.dart';
+import 'package:our_news_app/Screens/screen2.dart';
 import 'package:our_news_app/models/article_model.dart';
-import 'package:our_news_app/screen2.dart';
 import 'package:our_news_app/service/api.dart';
 
 class Serach extends StatefulWidget {
@@ -12,18 +13,26 @@ class Serach extends StatefulWidget {
 
 class _SerachState extends State<Serach> {
 
-  w(w1,pw){return pw*(w1/392);}
-	h(h1,ph){return ph*(h1/850);}
+  w(w1,pw){return pw*(w1/394);}
+	h(h1,ph){return ph*(h1/851);}
 
+  @override
+  void initState() { 
+    super.initState();
+    SystemChrome.setPreferredOrientations(
+      [DeviceOrientation.portraitDown,DeviceOrientation.portraitUp,]
+    );
+  }
+
+  int selectedicon=0;
+  bool showList = false;
   ApiService client = ApiService();
   String query;
-  bool showList = false;
   String s1 = "http://newsapi.org/v2/everything?q=";
-  String s2 = "&apiKey=758b45cf50bf475cbd2f2ba76698bf96";
+  String s2 = "&apiKey=1e5f1856fd144cc5898130425ce37a22";
 
   @override
   Widget build(BuildContext context) {
-    var ph = Get.size.height;
     var pw = Get.size.width;
     return Scaffold(
       appBar: AppBar(

@@ -1,9 +1,15 @@
-import 'package:email_auth/email_auth.dart';
+import 'dart:math';
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-// import 'dart:html';
-import 'package:our_news_app/otp.dart';
+import 'package:mailer/mailer.dart';
+import 'package:mailer/smtp_server.dart';
+import 'package:our_news_app/Login/otp.dart';
+import 'package:our_news_app/Screens/screen1.dart';
+import 'package:our_news_app/Splash/splashscreen.dart';
+import 'package:our_news_app/dataservice/AuthDatabase.dart';
+import 'package:our_news_app/dataservice/dataservice.dart';
 
 class Mood extends StatefulWidget {
   @override
@@ -17,17 +23,52 @@ class _MoodState extends State<Mood> {
     TextEditingController email = TextEditingController();
     TextEditingController password = TextEditingController();
     TextEditingController name = TextEditingController();
+    var otp = '';
+    final Dataservice dsvar=Get.find<Dataservice>();
 
+sendotp() async {
+  String username = 'tanishqagarwal987@gmail.com';
+  String password = 'Tanishq@987';
 
-    void sendotp() async {
-    EmailAuth.sessionName = "Globe Talks";
-    var res = await EmailAuth.sendOtp(receiverMail: email.text);
-    if (res != null) {
-      funsnack('OTP sent','Otp has ben sent successfully',Colors.purpleAccent,Icons.info_outline,30.0,0.0,20.0,10.0,10.0);
+  final smtpServer = gmail(username, password);
+  // Use the SmtpServer class to configure an SMTP server:
+  // final smtpServer = SmtpServer('smtp.domain.com');
+  // See the named arguments of SmtpServer for further configuration
+  // options.  
+  var rnd = Random();
+  for(int i = 0;i<4;i++){
+    otp += rnd.nextInt(9).toString();
+  }
+  final message = Message()
+    ..from = Address(username, 'Globe Talks')
+    ..recipients.add(email.text.toString())
+    // ..ccRecipients.addAll(['lcs2019021@iiitl.ac.in'])
+    // ..bccRecipients.add(Address('lcs2019020@iiitl.ac.in'))
+    ..subject = 'Confirm E-mail 😀😀'
+    // ..text = 'This is the plain text.\nThis is line 2 of the text part.'
+    ..html = "<h3 style='color:black;'>Enter the OTP written below in Globe Talks App to confirm your e-mail.</h3>\n<h3 style='color:black;'>OTP is <span style='color:blue;'>$otp</span></h3>\n<h4 style='color:black;'>Welcome to the community of Globe Talks.</h4>\n<h4 style='color:black;'>Thank You for using Globe Talks</h4>\n<h4 style='color:black;'>Team Globe Talks</h4>";
+
+  try {
+    final sendReport = await send(message, smtpServer);
+    if(sendReport.mail != null){
+      funsnack('OTP sent','Otp has been sent successfully',Colors.purpleAccent,Icons.info_outline,30.0,0.0,20.0,10.0,10.0);
     } else {
       funsnack('Error Occured','Please try again',Colors.redAccent,Icons.info_outline,30.0,0.0,20.0,10.0,10.0);
     }
+    print('Message sent: ' + sendReport.toString());
+  } on MailerException catch (e) {
+    print('Message not sent.');
+    funsnack('Error Occured','Please try again',Colors.redAccent,Icons.info_outline,30.0,0.0,20.0,10.0,10.0);
+    for (var p in e.problems) {
+      print('Problem: ${p.code}: ${p.msg}');
+    }
   }
+  // Create a smtp client that will persist the connection
+  var connection = PersistentConnection(smtpServer);
+  await connection.send(message);  // Send the otp message
+  await connection.close();  // close the connection
+}
+
 
   capitalizeFirstOfEach(s){return s.replaceAll(RegExp(' +'), ' ').split(" ").map((str) => str.toString().capitalize).join(" ");}
 
@@ -47,14 +88,25 @@ class _MoodState extends State<Mood> {
       );
   }
 
-  w(w1,pw){return pw*(w1/360);}
-	h(h1,ph){return ph*(h1/760);}
-
+  w(w1,pw){return pw*(w1/394);}
+	h(h1,ph){return ph*(h1/851);}
+  @override
+  void initState() { 
+    super.initState();
+    dsvar.verifyinguser(false);
+    SystemChrome.setPreferredOrientations(
+      [DeviceOrientation.portraitDown,DeviceOrientation.portraitUp,]
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     var pw=Get.size.width;
-    return DefaultTabController(
+    var ph=Get.size.height;
+    return Obx((){
+      if(dsvar.verifyinguser.value){return SplashScreen();}
+      else{
+        return DefaultTabController(
       length: 2,
       child: Scaffold(
         body: NestedScrollView(
@@ -62,32 +114,33 @@ class _MoodState extends State<Mood> {
             return [
               SliverAppBar(
                 forceElevated: true,
+                leadingWidth: 0,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18)),
                 titleSpacing: 0,
-                toolbarHeight: 380,
+                toolbarHeight: h(380,ph),
                 elevation: 10,
                 shadowColor: Colors.black.withOpacity(0.7),
                 backgroundColor: Colors.white.withOpacity(0.95),
                 title: _sta(),
                 bottom: TabBar(
-                  isScrollable: true,
+                  isScrollable: false,
                   indicatorSize: TabBarIndicatorSize.label,
                   labelColor: Colors.black,
-                  labelPadding: EdgeInsets.symmetric(horizontal: 40),
+                  labelPadding: EdgeInsets.symmetric(horizontal: w(40,pw)),
                   unselectedLabelColor: Colors.grey,
                   indicatorColor: Colors.black.withOpacity(0.8),
                   tabs: [
                     Tab(
                       child: Text('Login',
                           style: TextStyle(
-                            fontSize: 21,
+                            fontSize: w(21,pw),
                           )),
                     ),
                     Tab(
                       child: Text('Sign up',
                           style: TextStyle(
-                            fontSize: 21,
+                            fontSize: w(21,pw),
                           )),
                     ),
                   ],
@@ -106,44 +159,44 @@ class _MoodState extends State<Mood> {
               child: Column(
                 children: [
                   Padding(
-                    padding:  EdgeInsets.symmetric(horizontal:35.0),
+                    padding:  EdgeInsets.symmetric(horizontal:w(35.0,pw)),
                     child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text("Email",style: TextStyle(fontSize: 25,fontWeight: FontWeight.bold,color: Colors.orange.withOpacity(0.95)),),
-                        Icon(Icons.email_rounded,color: Colors.red.withOpacity(0.9),size:30)
+                        Text("Email",style: TextStyle(fontSize: w(25,pw),fontWeight: FontWeight.bold,color: Colors.orange.withOpacity(0.95)),),
+                        Icon(Icons.email_rounded,color: Colors.red.withOpacity(0.9),size:w(30,pw))
                       ],
                     ),
                   ),
                      Container(margin: EdgeInsets.only(left:w(30,pw),right: w(30,pw)),
-                     height: 50,
+                     height: h(50,ph),
                         decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
                         child: Align(alignment: Alignment.topCenter,
                           child: TextFormField(keyboardType: TextInputType.name,cursorColor: Colors.black.withOpacity(0.6),maxLines: 2,minLines: 1,
-                          cursorHeight: 30,
-                          style: TextStyle(color: Colors.white),
+                          cursorHeight: h(30,ph),
+                          style: TextStyle(color: Colors.black),
                           controller: email,
                             decoration: InputDecoration(
-                              hintText: "abc@gmail.com",hintStyle: TextStyle(color: Colors.grey)
+                              hintText: "abcd@gmail.com",hintStyle: TextStyle(color: Colors.grey)
                             ),
                           ),
                         ),),
-                  SizedBox(height:40),
+                  SizedBox(height:h(40,ph)),
                   Padding(
-                    padding:  EdgeInsets.symmetric(horizontal:35.0),
+                    padding:  EdgeInsets.symmetric(horizontal:w(35.0,pw)),
                     child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text("Password",style: TextStyle(fontSize: 24,fontWeight: FontWeight.bold,color: Colors.pink.withOpacity(0.95)),),
-                        Icon(Icons.lock_outline,color: Colors.brown.withOpacity(0.95),size:25)
+                        Text("Password",style: TextStyle(fontSize: w(24,pw),fontWeight: FontWeight.bold,color: Colors.pink.withOpacity(0.95)),),
+                        Icon(Icons.lock_outline,color: Colors.brown.withOpacity(0.95),size:w(25,pw))
                       ],
                     ),
                   ),
                   Container(margin: EdgeInsets.only(left:w(30,pw),right: w(30,pw)),
-                     height: 50,
+                     height: h(50,ph),
                         decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
                         child: Align(alignment: Alignment.topCenter,
                           child: TextFormField(keyboardType: TextInputType.name,obscureText: true,
                           cursorColor: Colors.black.withOpacity(0.6),maxLines: 1,
-                          cursorHeight: 30,
+                          cursorHeight: h(30,ph),
                           style: TextStyle(color: Colors.black),
                           controller: password,
                             decoration: InputDecoration(
@@ -153,19 +206,26 @@ class _MoodState extends State<Mood> {
                         ),),
                 Align(alignment: Alignment.topLeft,
                   child: Padding(
-                      padding:  EdgeInsets.only(left:35.0,top: 20),
-                      child: Text("Forgot Password?",style: TextStyle(fontSize: 16,fontWeight: FontWeight.w100,color: Colors.red.withOpacity(0.95)),),
+                      padding:  EdgeInsets.only(left:w(35.0,pw),top: h(20,ph)),
+                      child: Text("Forgot Password?",style: TextStyle(fontSize: w(16,pw),fontWeight: FontWeight.w100,color: Colors.red.withOpacity(0.95)),),
                     ),
                 ),
                 ],
               ),
-            ),SizedBox(height: 40,),       
+            ),SizedBox(height: h(40,ph),),       
             GestureDetector(
-                    onTap: (){
+                    onTap: ()async{
                         if(email.text.length==0 || !EmailValidator.validate(email.text)){return funsnack('Error Occured','Enter valid email',Colors.redAccent,Icons.info_outline,30.0,0.0,20.0,10.0,10.0);}
                         else if(password.text.length==0){return funsnack('Error Occured','Enter valid password',Colors.redAccent,Icons.info_outline,30.0,0.0,20.0,10.0,10.0);}
                         else{
-                          // Get.to(()=>Otp(email.text,name.text,password.text));
+                          var user = await Authservice().loginwithemailandpassword(email.text,password.text);
+                          if(user[0]!=null){
+                              dsvar.userauth(user[0].user.uid);
+                              funsnack('OTP verified','Welcome to Globe Talks',Colors.purpleAccent,Icons.info_outline,30.0,0.0,20.0,10.0,10.0);
+                              return Get.offAll(Homepage());
+                            } else {
+                              funsnack('Error Occured','Please try again',Colors.redAccent,Icons.info_outline,30.0,0.0,20.0,10.0,10.0);
+                            }
                         }
                     },
                       child: Center(
@@ -177,7 +237,7 @@ class _MoodState extends State<Mood> {
                         ),
                         child: Container(
                           padding:
-                              EdgeInsets.symmetric(horizontal: 30, vertical: 6),
+                              EdgeInsets.symmetric(horizontal: w(30,pw), vertical: h(6,ph)),
                           decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(12),
                               gradient: LinearGradient(
@@ -187,7 +247,7 @@ class _MoodState extends State<Mood> {
                                     Colors.orange.withOpacity(0.6),
                                     Colors.pinkAccent.withOpacity(0.6),
                                   ])),
-                          child: Text("Verify",style: TextStyle(color: Colors.white,fontSize: 26,fontWeight: FontWeight.bold),),
+                          child: Text("Verify",style: TextStyle(color: Colors.white,fontSize: w(26,pw),fontWeight: FontWeight.bold),),
                         ),
                       ),
                     ),
@@ -196,24 +256,24 @@ class _MoodState extends State<Mood> {
               ),
               SingleChildScrollView(physics: ClampingScrollPhysics(),
                 child: Form(
-          key: _formkey1,
-          child: Column(
+                key: _formkey1,
+                child: Column(
                   children: [
                     Padding(
-                      padding:  EdgeInsets.only(left:35.0,right:35,top:30),
+                      padding:  EdgeInsets.only(left:w(35.0,pw),right:w(35.0,pw),top:h(30.0,ph)),
                       child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text("Name",style: TextStyle(fontSize: 24,fontWeight: FontWeight.bold,color: Colors.blue.withOpacity(0.95)),),
+                          Text("Name",style: TextStyle(fontSize: w(24,pw),fontWeight: FontWeight.bold,color: Colors.blue.withOpacity(0.95)),),
                           Icon(Icons.person,color: Colors.blueAccent.withOpacity(0.95),size:32)
                         ],
                       ),
                     ),
                        Container(margin: EdgeInsets.only(left:w(30,pw),right: w(30,pw)),
-                       height: 50,
+                       height: h(50,ph),
                           decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
                           child: Align(alignment: Alignment.topCenter,
                             child: TextFormField(keyboardType: TextInputType.name,cursorColor: Colors.black.withOpacity(0.6),maxLines: 2,minLines: 1,
-                            cursorHeight: 30,
+                            cursorHeight: h(30,ph),
                             controller: name,
                             style: TextStyle(color: Colors.black),
                               decoration: InputDecoration(
@@ -221,45 +281,45 @@ class _MoodState extends State<Mood> {
                               ),
                             ),
                           ),),
-                    SizedBox(height:30),
-                    Padding(
-                      padding:  EdgeInsets.symmetric(horizontal:35.0),
+                    SizedBox(height:h(30,ph),),
+                      Padding(
+                      padding:  EdgeInsets.symmetric(horizontal:w(35.0,pw),),
                       child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text("Email",style: TextStyle(fontSize: 25,fontWeight: FontWeight.bold,color: Colors.orange.withOpacity(0.95)),),
-                          Icon(Icons.email_rounded,color: Colors.red.withOpacity(0.95),size:30)
-                        ],
-                      ),
-                    ),
-                       Container(margin: EdgeInsets.only(left:w(30,pw),right: w(30,pw)),
-                       height: 50,
-                          decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
-                          child: Align(alignment: Alignment.topCenter,
-                            child: TextFormField(keyboardType: TextInputType.name,cursorColor: Colors.black.withOpacity(0.6),maxLines: 2,minLines: 1,
-                            cursorHeight: 30,
-                            style: TextStyle(color: Colors.black),
-                              controller: email,
-                              decoration: InputDecoration(
-                                hintText: "abc@gmail.com",hintStyle: TextStyle(color: Colors.grey,)
-                              ),
-                            ),
-                          ),),  SizedBox(height:30),
-                    Padding(
-                      padding:  EdgeInsets.symmetric(horizontal:35.0),
-                      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text("Create Password",style: TextStyle(fontSize: 24,fontWeight: FontWeight.bold,color: Colors.pink.withOpacity(0.95)),),
-                          Icon(Icons.lock_outline,color: Colors.brown.withOpacity(0.95),size:25)
+                          Text("Email",style: TextStyle(fontSize: w(25,pw),fontWeight: FontWeight.bold,color: Colors.orange.withOpacity(0.95)),),
+                          Icon(Icons.email_rounded,color: Colors.red.withOpacity(0.95),size:w(30,pw))
                         ],
                       ),
                     ),
                     Container(margin: EdgeInsets.only(left:w(30,pw),right: w(30,pw)),
-                       height: 50,
+                       height: h(50,ph),
+                          decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
+                          child: Align(alignment: Alignment.topCenter,
+                            child: TextFormField(keyboardType: TextInputType.name,cursorColor: Colors.black.withOpacity(0.6),maxLines: 2,minLines: 1,
+                            cursorHeight: h(30,ph),
+                            style: TextStyle(color: Colors.black),
+                              controller: email,
+                              decoration: InputDecoration(
+                                hintText: "abcd@gmail.com",hintStyle: TextStyle(color: Colors.grey,)
+                              ),
+                            ),
+                          ),),  SizedBox(height:h(30,ph)),
+                    Padding(
+                      padding:  EdgeInsets.symmetric(horizontal:w(35.0,pw)),
+                      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text("Create Password",style: TextStyle(fontSize: w(24,pw),fontWeight: FontWeight.bold,color: Colors.pink.withOpacity(0.95)),),
+                          Icon(Icons.lock_outline,color: Colors.brown.withOpacity(0.95),size:w(25,pw))
+                        ],
+                      ),
+                    ),
+                    Container(margin: EdgeInsets.only(left:w(30,pw),right: w(30,pw)),
+                       height: h(50,ph),
                           decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
                           child: Align(alignment: Alignment.topCenter,
                             child: TextFormField(keyboardType: TextInputType.name,obscureText: true,
                             cursorColor: Colors.black.withOpacity(0.6),maxLines: 1,
-                            cursorHeight: 30,
+                            cursorHeight: h(30,ph),
                             style: TextStyle(color: Colors.black),
                               controller: password,
                               decoration: InputDecoration(
@@ -267,15 +327,20 @@ class _MoodState extends State<Mood> {
                               ),
                             ),
                           ),),
-                  SizedBox(height:20),
+                  SizedBox(height:h(20,ph)),
                   GestureDetector(
-                      onTap: (){
+                      onTap: ()async{
                         if(name.text.length==0){return funsnack('Error Occured','Enter valid name',Colors.redAccent,Icons.info_outline,30.0,0.0,20.0,10.0,10.0);}
                         else if(email.text.length==0 || !EmailValidator.validate(email.text)){return funsnack('Error Occured','Enter valid email',Colors.redAccent,Icons.info_outline,30.0,0.0,20.0,10.0,10.0);}
-                        else if(password.text.length==0){return funsnack('Error Occured','Enter valid password',Colors.redAccent,Icons.info_outline,30.0,0.0,20.0,10.0,10.0);}
+                        else if(password.text.length<8){return funsnack('Error Occured','Enter password greater than 7 characters',Colors.redAccent,Icons.info_outline,30.0,0.0,20.0,10.0,10.0);}
                         else{
-                          sendotp();
-                          Get.to(()=>Otp(email.text,name.text,password.text));
+                          var res = await Dataservice().funcheckemail(email.text);
+                          if(res[0]!=null || res[0]==false){
+                            sendotp();
+                            Get.to(()=>Otp(email.text,password.text,otp,name:name.text));
+                          }else{
+                            funsnack('Error Occured','User already exist',Colors.redAccent,Icons.info_outline,30.0,0.0,20.0,10.0,10.0);
+                          }
                         }
                     },
                       child: Center(
@@ -301,25 +366,26 @@ class _MoodState extends State<Mood> {
                               "Sign Up",
                               style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 26,
+                                  fontSize: w(26,pw),
                                   fontWeight: FontWeight.bold),
                             ),
                           ),
                         ),
                       ),
-                    ),],
+                    ),
+                    
+                    ],
                 ),
         ),
-              ),
-        
-              
-                
+              ),               
             ],
           ),
         ),
       ),
     );
-  }
+      }
+    });
+    }
 }
 
 class Cont1 extends CustomClipper<Path> {

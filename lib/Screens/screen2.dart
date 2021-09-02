@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:our_news_app/dataservice.dart';
+import 'package:our_news_app/dataservice/dataservice.dart';
 
 class Screen2 extends StatefulWidget {
 
-  String image,title,desc,cate,name,publish,author;
+  final String image,title,desc,cate,name,publish,author;
   Screen2(this.image,this.title,this.desc,this.cate,this.name,this.publish,{this.author});
 
   @override
@@ -13,8 +14,9 @@ class Screen2 extends StatefulWidget {
 
 class _Screen2State extends State<Screen2> {
 
+  final Dataservice dsvar=Get.find<Dataservice>();
+
   fundatetime(publish,type){
-    var i1 = publish.toString().indexOf('T');
     if(type==0){
       var da = publish.toString().substring(8,10);
       var mo = publish.toString().substring(5,7);
@@ -48,8 +50,16 @@ class _Screen2State extends State<Screen2> {
     }
   }
 
-  w(w1,pw){return pw*(w1/392);}
-	h(h1,ph){return ph*(h1/850);}
+  w(w1,pw){return pw*(w1/394);}
+	h(h1,ph){return ph*(h1/851);}
+
+  @override
+  void initState() { 
+    super.initState();
+    SystemChrome.setPreferredOrientations(
+      [DeviceOrientation.portraitDown,DeviceOrientation.portraitUp,]
+    );
+  }
 
   capitalizeFirstOfEach(s){return s.replaceAll(RegExp(' +'), ' ').split(" ").map((str) => str.toString().capitalize).join(" ");}
 
@@ -127,7 +137,7 @@ class _Screen2State extends State<Screen2> {
                             ),
                             GestureDetector(
                               onTap: ()async{
-                              var res = await Dataservice().funadd(widget.title,fundatetime(widget.publish,0),fundatetime(widget.publish,1),widget.desc,widget.image,'Breaking',widget.name,widget.publish,author:widget.author);
+                              var res = await Dataservice().funadd(dsvar.userauth.toString(),widget.title,fundatetime(widget.publish,0),fundatetime(widget.publish,1),widget.desc,widget.image,'Breaking',widget.name,widget.publish,author:widget.author);
                               if(res[0]!=null){
                                 funsnack('News Added','News added to your bookmarks',Colors.purpleAccent,Icons.info_outline,30.0,0.0,20.0,10.0,10.0);
                               }else{

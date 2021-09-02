@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
-import 'package:our_news_app/dataservice.dart';
+import 'package:our_news_app/dataservice/dataservice.dart';
 
 class Authservice {
 
@@ -14,46 +14,46 @@ class Authservice {
 
   createEmail(email,password,name)async{
     try{
-      dsvar.signinshop(true);
+      dsvar.verifyinguser(true);
       UserCredential credential = await _auth.createUserWithEmailAndPassword(email: email, password: password);
       return [credential];
     }catch(e){
-      dsvar.signinshop(false);
+      dsvar.verifyinguser(false);
       print("${e.code} from authservice login side");
       return [null,e.code];
     }finally{
-      dsvar.signinshop(false);
+      dsvar.verifyinguser(false);
     }
   }
 
   //login with email and password
   loginwithemailandpassword(String email ,String password) async{
+    dsvar.verifyinguser(true);
     try{
-      dsvar.signinshop(true);
       UserCredential credential = await _auth.signInWithEmailAndPassword(email: email, password: password);
       return [credential];
     }catch(e){
-      dsvar.signinshop(false);
+      dsvar.verifyinguser(false);
       print("${e.code} from authservice login side");
       return [null,e.code];
     }finally{
-      dsvar.signinshop(false);
+      dsvar.verifyinguser(false);
     }
   }
 
   //forgot password
 
   forgotpassword(String email) async{
-    dsvar.sendingreset(true);
+    dsvar.verifyinguser(true);
     try{
       await _auth.sendPasswordResetEmail(email: email);
       return ['done'];
     }catch(e){
-      dsvar.sendingreset(false);
+      dsvar.verifyinguser(false);
       print("$e from authservice forgot side");
       return [null,e.code];
     }finally{
-      dsvar.sendingreset(false);
+      dsvar.verifyinguser(false);
     }
   }
 

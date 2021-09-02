@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
-import 'package:our_news_app/dataservice.dart';
-import 'package:our_news_app/screen2.dart';
+import 'package:our_news_app/Screens/screen2.dart';
+import 'package:our_news_app/dataservice/dataservice.dart';
 import 'package:paginate_firestore/paginate_firestore.dart';
 
 class Screen3 extends StatefulWidget {
@@ -14,9 +14,19 @@ class Screen3 extends StatefulWidget {
 
 class _Screen3State extends State<Screen3> {
 
-    w(w1,pw){return pw*(w1/392);}
-	h(h1,ph){return ph*(h1/850);}
+  final Dataservice dsvar=Get.find<Dataservice>();
+
+    w(w1,pw){return pw*(w1/394);}
+	h(h1,ph){return ph*(h1/851);}
     capitalizeFirstOfEach(s){return s.replaceAll(RegExp(' +'), ' ').split(" ").map((str) => str.toString().capitalize).join(" ");}
+
+  @override
+  void initState() { 
+    super.initState();
+    SystemChrome.setPreferredOrientations(
+      [DeviceOrientation.portraitDown,DeviceOrientation.portraitUp,]
+    );
+  }
 
   funsnack(title,desc,Color c1,IconData i1,isize,to,bo,le,ri){
     var pw=Get.size.width;
@@ -129,7 +139,7 @@ class _Screen3State extends State<Screen3> {
                                   flex: 2,
                                   child: GestureDetector(
                                     onTap: ()async{
-                                      var res = await Dataservice().funremove(ds.id);
+                                      var res = await Dataservice().funremove(dsvar.userauth.toString(),ds.id);
                                       if(res[0]!=null){
                                         funsnack('News Deleted','News deleted from your bookmarks',Colors.purpleAccent,Icons.info_outline,30.0,0.0,20.0,10.0,10.0);
                                       }else{
@@ -199,7 +209,7 @@ class _Screen3State extends State<Screen3> {
             ),
           );
         },
-        query: FirebaseFirestore.instance.collection('Bookmarks'),
+        query: FirebaseFirestore.instance.collection('Users').doc(dsvar.userauth.toString()).collection("Bookmarks"),
         itemBuilderType: PaginateBuilderType.listView,
         initialLoader: SpinKitCircle(color: Colors.black,size:30,),
         emptyDisplay: Center(child: Column(mainAxisAlignment : MainAxisAlignment.center,

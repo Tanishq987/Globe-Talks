@@ -1,12 +1,19 @@
-import 'package:email_auth/email_auth.dart';
+import 'dart:math';
+import 'package:flutter/services.dart';
+import 'package:mailer/smtp_server.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mailer/mailer.dart';
+import 'package:our_news_app/Screens/screen1.dart';
+import 'package:our_news_app/Splash/splashscreen.dart';
+import 'package:our_news_app/dataservice/AuthDatabase.dart';
+import 'package:our_news_app/dataservice/dataservice.dart';
 import 'package:pinput/pin_put/pin_put.dart';
 
 class Otp extends StatefulWidget {
 
-  String email,name,password;
-  Otp(this.email,this.name,this.password);
+  final String email,name,password,signupotp;
+  Otp(this.email,this.password,this.signupotp,{this.name});
 
   @override
   _OtpState createState() => _OtpState();
@@ -14,19 +21,60 @@ class Otp extends StatefulWidget {
 
 class _OtpState extends State<Otp> {
   ScrollController controller = ScrollController();
+  var otp,code;
+  final Dataservice dsvar=Get.find<Dataservice>();
 
+  @override
+  void initState() { 
+    super.initState();
+    SystemChrome.setPreferredOrientations(
+      [DeviceOrientation.portraitDown,DeviceOrientation.portraitUp,]
+    );
+  }
 
+  sendotp() async {
+  String username = 'tanishqagarwal987@gmail.com';
+  String password = 'Tanishq@987';
 
+  final smtpServer = gmail(username, password);
+  // Use the SmtpServer class to configure an SMTP server:
+  // final smtpServer = SmtpServer('smtp.domain.com');
+  // See the named arguments of SmtpServer for further configuration
+  // options.  
+  var rnd = Random();
+  for(int i = 0;i<4;i++){
+    otp += rnd.nextInt(9).toString();
+  }
+  final message = Message()
+    ..from = Address(username, 'Globe Talks')
+    ..recipients.add('lcs2019046@iiitl.ac.in')
+    ..ccRecipients.addAll(['lcs2019021@iiitl.ac.in'])
+    ..bccRecipients.add(Address('lcs2019020@iiitl.ac.in'))
+    ..subject = 'Confirm E-mail 😀😀'
+    // ..text = 'This is the plain text.\nThis is line 2 of the text part.'
+    ..html = "<h3>Enter the otp written below in Globe Talks App to confirm your e-mail.</h3>\n<h3>OTP is <span style='color:blue;'>$otp</span></h3>";
 
-  void sendotp() async {
-    EmailAuth.sessionName = "Globe Talks";
-    var res = await EmailAuth.sendOtp(receiverMail: widget.email);
-    if (res != null) {
-      funsnack('OTP sent','Otp has been sent successfully',Colors.purpleAccent,Icons.info_outline,30.0,0.0,20.0,10.0,10.0);
+  try {
+    final sendReport = await send(message, smtpServer);
+    if(sendReport != null){
+      funsnack('OTP sent','Otp has ben sent successfully',Colors.purpleAccent,Icons.info_outline,30.0,0.0,20.0,10.0,10.0);
     } else {
       funsnack('Error Occured','Please try again',Colors.redAccent,Icons.info_outline,30.0,0.0,20.0,10.0,10.0);
     }
+    print('Message sent: ' + sendReport.toString());
+  } on MailerException catch (e) {
+    print('Message not sent.');
+    funsnack('Error Occured','Please try again',Colors.redAccent,Icons.info_outline,30.0,0.0,20.0,10.0,10.0);
+    for (var p in e.problems) {
+      print('Problem: ${p.code}: ${p.msg}');
+    }
   }
+  // Create a smtp client that will persist the connection
+  var connection = PersistentConnection(smtpServer);
+  await connection.send(message);  // Send the otp message
+  await connection.close();  // close the connection
+}
+
 
   capitalizeFirstOfEach(s){return s.replaceAll(RegExp(' +'), ' ').split(" ").map((str) => str.toString().capitalize).join(" ");}
 
@@ -51,7 +99,11 @@ class _OtpState extends State<Otp> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Obx((){
+      if(dsvar.verifyinguser.value){
+        return SplashScreen();
+        }else{
+        return Scaffold(
       body: ListView(
         controller: controller,
         shrinkWrap: true,
@@ -222,7 +274,6 @@ class _OtpState extends State<Otp> {
             child: PinPut(
               textStyle: TextStyle(letterSpacing: .5, fontSize: 20),
               keyboardType: TextInputType.number,
-              autofocus: true,
               onChanged: (value) {
                 if (value == null || value.length == 0) {
                   controller.animateTo(250,
@@ -230,39 +281,30 @@ class _OtpState extends State<Otp> {
                       curve: Curves.easeInOut);
                 }
               },
-
-              onSubmit: (value) {},
-              //   onSubmit: (value)async{
-              //     setState(() {
-              //       code=value;
-              //       print('$code code here');
-              //     });
-              // if(code.length==6){
-              //       dsvar.verifyinguser(true);
-              //   try{
-              //   var user =await FirebaseAuth.instance.signInWithCredential(PhoneAuthProvider.credential(verificationId: _verificationCode, smsCode: code),);
-              //   print(user);
-              //   if(user!=null){
-              //     print(user.user.uid);
-              //     dsvar.useruid(user.user.uid);
-              //     dsvar.newusernumber(user.user.phoneNumber.toString().substring(3,));
-              //     print(dsvar.newusernumber);
-              //     Get.offAll(Wrapper());
-              //     t1.cancel();
-              //   }
-              // }
-              // catch(e){
-              // print("on manually typed pin");
-              // dsvar.verifyinguser(false);
-              // print(e);
-              // Shortcut().funsnack('Error Occured','${e.code}',Colors.redAccent,Icons.error,30.0,0.0,20.0,10.0,10.0);
-              //   }finally{
-              //     dsvar.verifyinguser(false);
-              //   }
-              // }else{
-              //   Shortcut().funsnack('Error Occured',"Invalid otp",Colors.pink,Icons.info_outline,30.0,0.0,20.0,10.0,10.0);
-              // }
-              //   },
+                onSubmit: (value)async{
+                  setState(() {
+                    code=value;
+                    print('$code code here');
+                  });
+              if(code==widget.signupotp || code==otp){
+                await Authservice().createEmail(widget.email,widget.password,widget.signupotp!=null?widget.signupotp:otp).then((user)async{
+                  if(user[0]!=null){
+                  var res = await Dataservice().funcreateuser(user[0],widget.name);
+                  if(res[0]!=null){
+                    dsvar.userauth(user[0].user.uid);
+                    funsnack('OTP verified','Welcome to Globe Talks',Colors.purpleAccent,Icons.info_outline,30.0,0.0,20.0,10.0,10.0);
+                    Get.to(()=>Homepage());
+                  }else{
+                    funsnack('Error Occured','Please try again',Colors.redAccent,Icons.info_outline,30.0,0.0,20.0,10.0,10.0);
+                  }
+                } else {
+                  funsnack('Error Occured','Please try again',Colors.redAccent,Icons.info_outline,30.0,0.0,20.0,10.0,10.0);
+                }
+                });
+              }else{
+                funsnack('Error Occured',"Invalid otp",Colors.pink,Icons.info_outline,30.0,0.0,20.0,10.0,10.0);
+              }
+                },
               fieldsCount: 4,
               followingFieldDecoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(6),
@@ -339,7 +381,9 @@ class _OtpState extends State<Otp> {
         ],
       ),
     );
-  }
+    }
+    });
+    }
 }
 
 class Cont1 extends CustomClipper<Path> {
